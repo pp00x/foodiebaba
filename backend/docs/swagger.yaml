@@ -1,0 +1,462 @@
+basePath: /
+definitions:
+  gorm.DeletedAt:
+    properties:
+      time:
+        type: string
+      valid:
+        description: Valid is true if Time is not NULL
+        type: boolean
+    type: object
+  models.CreateRestaurantInput:
+    properties:
+      address:
+        type: string
+      category:
+        type: string
+      description:
+        type: string
+      name:
+        type: string
+    required:
+    - address
+    - category
+    - description
+    - name
+    type: object
+  models.Photo:
+    properties:
+      created_at:
+        type: string
+      deleted_at:
+        $ref: '#/definitions/gorm.DeletedAt'
+      id:
+        type: integer
+      restaurant_id:
+        type: integer
+      updated_at:
+        type: string
+      url:
+        type: string
+    type: object
+  models.Restaurant:
+    properties:
+      address:
+        type: string
+      category:
+        type: string
+      created_at:
+        type: string
+      created_by:
+        type: integer
+      createdBy:
+        $ref: '#/definitions/models.User'
+      deleted_at:
+        $ref: '#/definitions/gorm.DeletedAt'
+      description:
+        type: string
+      id:
+        type: integer
+      name:
+        type: string
+      photos:
+        items:
+          $ref: '#/definitions/models.Photo'
+        type: array
+      reviews:
+        items:
+          $ref: '#/definitions/models.Review'
+        type: array
+      status:
+        description: '"pending", "approved", "rejected"'
+        type: string
+      updated_at:
+        type: string
+    required:
+    - address
+    - category
+    - description
+    - name
+    type: object
+  models.Review:
+    properties:
+      comment:
+        type: string
+      created_at:
+        type: string
+      deleted_at:
+        $ref: '#/definitions/gorm.DeletedAt'
+      id:
+        type: integer
+      rating:
+        maximum: 5
+        minimum: 1
+        type: integer
+      restaurant:
+        $ref: '#/definitions/models.Restaurant'
+      restaurant_id:
+        type: integer
+      updated_at:
+        type: string
+      user:
+        $ref: '#/definitions/models.User'
+      user_id:
+        type: integer
+    required:
+    - comment
+    - rating
+    - restaurant_id
+    type: object
+  models.User:
+    properties:
+      created_at:
+        type: string
+      deleted_at:
+        $ref: '#/definitions/gorm.DeletedAt'
+      email:
+        type: string
+      id:
+        type: integer
+      listings:
+        items:
+          $ref: '#/definitions/models.Restaurant'
+        type: array
+      password:
+        type: string
+      reputation:
+        type: integer
+      reviews:
+        items:
+          $ref: '#/definitions/models.Review'
+        type: array
+      role:
+        description: '"user" or "admin"'
+        type: string
+      updated_at:
+        type: string
+      username:
+        type: string
+    required:
+    - email
+    - password
+    - username
+    type: object
+host: localhost:8080
+info:
+  contact:
+    email: support@foodiebaba.com
+    name: API Support
+    url: http://foodiebaba.com/support
+  description: API documentation for FoodieBaba application.
+  license:
+    name: MIT License
+    url: https://opensource.org/licenses/MIT
+  termsOfService: http://foodiebaba.com/terms/
+  title: FoodieBaba API
+  version: "1.0"
+paths:
+  /admin/restaurants/{id}/approve:
+    put:
+      description: Admins can approve a pending restaurant
+      parameters:
+      - description: Restaurant ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Approve a restaurant
+      tags:
+      - Moderation
+  /admin/restaurants/{id}/reject:
+    put:
+      description: Admins can reject a pending restaurant
+      parameters:
+      - description: Restaurant ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Reject a restaurant
+      tags:
+      - Moderation
+  /admin/restaurants/pending:
+    get:
+      description: Admins can get a list of restaurants pending approval
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Restaurant'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get pending restaurants
+      tags:
+      - Moderation
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: Authenticate user and return a JWT token
+      parameters:
+      - description: Email and Password
+        in: body
+        name: credentials
+        required: true
+        schema:
+          additionalProperties:
+            type: string
+          type: object
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: User login
+      tags:
+      - Auth
+  /register:
+    post:
+      consumes:
+      - application/json
+      description: Register a new user with username, email, and password
+      parameters:
+      - description: User
+        in: body
+        name: user
+        required: true
+        schema:
+          $ref: '#/definitions/models.User'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: Register a new user
+      tags:
+      - Auth
+  /restaurants:
+    get:
+      consumes:
+      - application/json
+      description: Get a list of approved restaurants with optional pagination, search,
+        and filtering
+      parameters:
+      - description: Page number
+        in: query
+        name: page
+        type: integer
+      - description: Page size
+        in: query
+        name: limit
+        type: integer
+      - description: Search by name
+        in: query
+        name: name
+        type: string
+      - description: Filter by category
+        in: query
+        name: category
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Restaurant'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      summary: List restaurants
+      tags:
+      - Restaurants
+    post:
+      consumes:
+      - application/json
+      description: Users can add a new restaurant listing (requires approval)
+      parameters:
+      - description: Restaurant
+        in: body
+        name: restaurant
+        required: true
+        schema:
+          $ref: '#/definitions/models.CreateRestaurantInput'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Restaurant'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Add a new restaurant
+      tags:
+      - Restaurants
+  /restaurants/{id}/photos:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Users can upload photos for a restaurant
+      parameters:
+      - description: Restaurant ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Photos
+        in: formData
+        name: photos
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/models.Photo'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Upload photos for a restaurant
+      tags:
+      - Restaurants
+  /reviews:
+    post:
+      consumes:
+      - application/json
+      description: Users can add a review to a restaurant
+      parameters:
+      - description: Review
+        in: body
+        name: review
+        required: true
+        schema:
+          $ref: '#/definitions/models.Review'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/models.Review'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Add a review
+      tags:
+      - Reviews
+securityDefinitions:
+  BearerAuth:
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
